@@ -1,0 +1,33 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Recipient {
+  id        String    @id @default(uuid())
+  slug      String    @unique   // usado na URL pública, ex: /m/slug
+  name      String
+  createdAt DateTime  @default(now())
+  messages  Message[]
+}
+
+model Message {
+  id          String    @id @default(uuid())
+  content     String
+  recipientId String
+  recipient   Recipient @relation(fields: [recipientId], references: [id])
+  createdAt   DateTime  @default(now())
+}
+
+// Não guardamos o conteúdo bloqueado — só metadados, para permitir
+// monitorar a taxa de bloqueio sem expor texto ofensivo a ninguém.
+model BlockedAttempt {
+  id          String   @id @default(uuid())
+  recipientId String
+  reason      String   // categoria retornada pela API de moderação
+  createdAt   DateTime @default(now())
+}
